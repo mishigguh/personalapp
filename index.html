@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#111111" />
+  <meta name="theme-color" content="#0d0f12" />
   <title>HMS Ladder</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
@@ -12,16 +12,16 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <div class="eyebrow">SEASON 1</div>
+        <div class="eyebrow">SEASON 1 · YEAR 3</div>
         <h1>HMS Ladder</h1>
       </div>
       <button id="installBtn" class="ghost hidden">Install</button>
     </header>
 
     <nav class="tabs" aria-label="Main navigation">
-      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab active" data-tab="dashboard">Home</button>
       <button class="tab" data-tab="practice">Practice</button>
-      <button class="tab" data-tab="tree">Credits</button>
+      <button class="tab" data-tab="tree">Progress</button>
       <button class="tab" data-tab="stats">Stats</button>
     </nav>
 
@@ -29,16 +29,30 @@
       <div class="card hero-card">
         <div class="row between baseline">
           <div>
-            <div class="eyebrow">THIS WEEK</div>
-            <div class="big-number"><span id="weekMinutes">0</span><span class="unit"> min</span></div>
+            <div class="eyebrow">WEEKLY XP</div>
+            <div class="big-number"><span id="weekMinutes">0</span><span class="unit"> / <span id="weekTargetInline">360</span></span></div>
           </div>
-          <button id="editTargetBtn" class="tiny">Target <span id="weekTargetLabel">360</span></button>
+          <button id="editTargetBtn" class="tiny">Edit target</button>
         </div>
-        <div class="progress"><div id="weekProgress" class="progress-fill"></div></div>
-        <div id="weekProgressText" class="muted small">0 / 360 XP</div>
+        <div class="progress large"><div id="weekProgress" class="progress-fill"></div></div>
+        <div id="weekProgressText" class="muted small">0 / 360 min · 1 XP = 1 minute</div>
       </div>
 
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">ACTIVE QUEUE</div>
+          <h2>What am I training now?</h2>
+        </div>
+        <button id="manageQueueBtn" class="linkish">Manage</button>
+      </div>
+      <div id="activeQuestList" class="quest-grid"></div>
+
       <button id="quickStartBtn" class="primary jumbo">Start Practice</button>
+
+      <div class="card">
+        <div class="row between"><h2>Resume recent</h2><span class="muted small">one tap starts the timer</span></div>
+        <div id="resumeRecent" class="resume-grid"></div>
+      </div>
 
       <div class="grid two">
         <div class="card">
@@ -47,15 +61,26 @@
           <div class="muted small">Passed cycles only</div>
         </div>
         <div class="card">
-          <div class="eyebrow">VIDEO-READY</div>
-          <div class="metric" id="readyCount">0</div>
-          <div class="muted small">Cycles ready to film</div>
+          <div class="eyebrow">CLOSEST CREDIT</div>
+          <div id="closestCredit" class="closest">None active yet</div>
         </div>
       </div>
 
       <div class="card">
-        <div class="row between"><h2>Weekly split</h2><span class="muted small">minutes</span></div>
+        <div class="row between"><h2>Field balance</h2><span class="muted small">this week</span></div>
         <div id="domainBars" class="bars"></div>
+      </div>
+
+      <div class="card weekly-review">
+        <div class="row between"><h2>Weekly review</h2><span id="weekRange" class="muted small"></span></div>
+        <div id="weeklySummary" class="review-grid"></div>
+        <div class="priority-box">
+          <div class="eyebrow">THIS WEEK'S PRIORITY</div>
+          <div class="row gap priority-row">
+            <input id="priorityInput" type="text" placeholder="e.g. Get Balance C4 video-ready" />
+            <button id="savePriorityBtn" class="secondary">Save</button>
+          </div>
+        </div>
       </div>
 
       <div class="card">
@@ -94,14 +119,18 @@
     </section>
 
     <section id="tree" class="panel">
-      <div class="card compact">
+      <div class="card compact progress-header">
         <div class="row between baseline">
           <div>
             <div class="eyebrow">CERTIFICATION PROGRESS</div>
             <div class="metric"><span id="treeCreditCount">0</span><span class="unit"> / 24 credits</span></div>
           </div>
-          <span class="muted small">min. 4 / field</span>
+          <div class="progress-actions">
+            <span class="muted small">min. 4 / field</span>
+            <label class="toggle-label"><input id="showLockedToggle" type="checkbox" /> Show locked</label>
+          </div>
         </div>
+        <p class="muted small queue-help">Tap a cycle to advance readiness. Use the pin to keep up to 3 cycles in your active queue.</p>
       </div>
       <div id="skillTree" class="skill-tree"></div>
     </section>
@@ -111,6 +140,12 @@
         <div class="card"><div class="eyebrow">THIS WEEK</div><div class="metric"><span id="statsWeek">0</span><span class="unit"> min</span></div></div>
         <div class="card"><div class="eyebrow">ALL TIME</div><div class="metric"><span id="statsAll">0</span><span class="unit"> min</span></div></div>
       </div>
+
+      <div class="card">
+        <div class="row between"><h2>8-week volume</h2><span class="muted small">minutes</span></div>
+        <div id="historyChart" class="history-chart"></div>
+      </div>
+
       <div class="card">
         <h2>By field</h2>
         <div id="statsByField" class="stats-table"></div>
@@ -132,6 +167,28 @@
       <h2>Weekly practice target</h2>
       <label>Minutes per week<input id="targetInput" type="number" min="1" step="15" /></label>
       <div class="row gap end"><button value="cancel" class="ghost">Cancel</button><button id="saveTargetBtn" value="default" class="primary">Save</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="sessionDialog">
+    <form method="dialog" class="dialog-card session-complete-card">
+      <div class="eyebrow">SESSION COMPLETE</div>
+      <div class="session-xp"><span id="sessionXp">0</span> XP</div>
+      <div id="sessionCompleteLabel" class="muted"></div>
+      <label>What changed / what next? <span class="muted">(optional)</span>
+        <input id="sessionNoteInput" type="text" placeholder="One line is enough" />
+      </label>
+      <div class="row gap end"><button id="skipSessionNoteBtn" value="cancel" class="ghost">Skip</button><button id="saveSessionNoteBtn" value="default" class="primary">Save</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="creditDialog">
+    <form method="dialog" class="dialog-card credit-dialog-card">
+      <div class="credit-badge">+1</div>
+      <div class="eyebrow">OFFICIAL CREDIT</div>
+      <h2 id="creditDialogTitle">Cycle passed</h2>
+      <p id="creditDialogBody" class="muted"></p>
+      <button value="default" class="primary full">Continue</button>
     </form>
   </dialog>
 
